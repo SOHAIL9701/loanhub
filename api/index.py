@@ -1,7 +1,7 @@
 import json
 import os
 from fastapi import FastAPI, Query
-from fastapi.responses import RedirectResponse, JSONResponse
+from fastapi.responses import RedirectResponse, JSONResponse, HTMLResponse
 
 # Import your custom Python library here once you drop it into /api:
 # from api import your_lib
@@ -10,11 +10,18 @@ app = FastAPI()
 
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 LOANS_FILE = os.path.join(BASE_DIR, "loans.json")
+HTML_FILE = os.path.join(BASE_DIR, "index.html")
 
 
 def load_loans():
     with open(LOANS_FILE, "r", encoding="utf-8") as f:
         return json.load(f)
+
+
+@app.get("/", response_class=HTMLResponse)
+def serve_home():
+    with open(HTML_FILE, "r", encoding="utf-8") as f:
+        return f.read()
 
 
 @app.get("/api/loans")
@@ -46,7 +53,6 @@ def track_and_redirect(offer_id: str):
     loans = load_loans()
     for loan in loans:
         if loan["id"] == offer_id:
-            # Log click event (visible in Vercel Runtime Logs)
             print(f"[AFFILIATE CLICK] offer_id={offer_id}")
             return RedirectResponse(url=loan["affiliate_url"], status_code=302)
     return JSONResponse(status_code=404, content={"error": "Offer not found"})
